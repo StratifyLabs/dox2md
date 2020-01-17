@@ -1,0 +1,20 @@
+
+set(SOURCES
+	main.cpp
+	Object.cpp
+	Object.hpp
+	Code.cpp
+	Code.hpp
+	Application.cpp
+	Application.hpp
+	ApplicationPrinter.cpp
+	ApplicationPrinter.hpp
+	MarkdownParser.cpp
+	MarkdownParser.hpp
+	Doxygen.cpp
+	Doxygen.hpp
+	DoxygenScraper.cpp
+	DoxygenScraper.hpp
+	Settings.cpp
+	Settings.hpp
+	PARENT_SCOPE)
