@@ -1,6 +1,7 @@
 #include <sapi/fs.hpp>
 
 #include "DoxygenScraper.hpp"
+#include "DoxygenJson.hpp"
 
 DoxygenScraper::DoxygenScraper()
 {
@@ -15,35 +16,64 @@ void DoxygenScraper::generate_code(const String & directory_path){
 		JsonObject doxygen = JsonDocument().load(
 					fs::File::Path(directory_path + "/" + file)
 					).to_object();
-		printf("processing %s\n", file.cstring());
-		generate_code_object("doxygen", doxygen.at("doxygen").to_object());
+		generate_code_object("doxygen", doxygen.at("doxygen").to_object(), 0);
 	}
 
 
-	for(const auto & object: m_objects){
+	for(s32 i= m_objects.count() - 1; i >= 0; i--){
+		DoxygenScraperObject & object = m_objects.at(i);
 		String class_name =  DoxygenScraperObject::translate_name(object.name(), true);
-		printf("class %s {\n", class_name.cstring());
-		printf("public:\n");
-		printf("%s(){\n%s\n}\n\n", class_name.cstring(), object.constructors().cstring());
-		printf("//Accessors:\n%s\n", object.accessors().cstring());
-		printf("private:\n%s\n", object.members().cstring());
-		printf("};\n");
+
+		bool is_dependent = false;
+		for(const auto & key: object.keys()){
+			if( key.kind() != "String" ){
+				is_dependent = true;
+				break;
+			}
+		}
+
+		if( is_dependent == false ){
+			printf("class %s {\n", class_name.cstring());
+			printf("public:\n");
+			printf("  %s(){}\n", class_name.cstring());
+			printf("  %s(JsonObject object){\n%s\n  }\n\n", class_name.cstring(), object.constructors().cstring());
+			printf("//Accessors:\n%s\n", object.accessors().cstring());
+			printf("private:\n%s\n", object.members().cstring());
+			printf("};\n\n");
+		}
+	}
+
+	for(s32 i= m_objects.count() - 1; i >= 0; i--){
+		DoxygenScraperObject & object = m_objects.at(i);
+		String class_name =  DoxygenScraperObject::translate_name(object.name(), true);
+		bool is_dependent = false;
+		for(const auto & key: object.keys()){
+			if( key.kind() != "String" ){
+				is_dependent = true;
+				break;
+			}
+		}
+
+		if( is_dependent == true ){
+			printf("class %s {\n", class_name.cstring());
+			printf("public:\n");
+			printf("%s(JsonObject object){\n%s\n}\n\n", class_name.cstring(), object.constructors().cstring());
+			printf("//Accessors:\n%s\n", object.accessors().cstring());
+			printf("private:\n%s\n", object.members().cstring());
+			printf("};\n\n");
+		}
 	}
 
 }
 
 
-int DoxygenScraper::generate_code_object(const String& object_key, const JsonObject & object){
+int DoxygenScraper::generate_code_object(const String& object_key, const JsonObject & object, int depth){
 
-	size_t offset = m_objects.find(object_key);
+	u32 offset = m_objects.find(object_key);
 	if( offset == m_objects.count() ){
-		//printf("Add object %s %d\n", object_key.cstring(), m_objects.count());
 		m_objects.push_back(
 					DoxygenScraperObject(object_key)
 					);
-		//printf("offset for new object is %d == %d\n", offset, m_objects.count());
-	} else {
-		//printf("refer to object at %d\n", offset);
 	}
 
 	DoxygenScraperObject & current_object = m_objects.at(offset);
@@ -53,32 +83,31 @@ int DoxygenScraper::generate_code_object(const String& object_key, const JsonObj
 		JsonValue value = object.at(key);
 
 		if( value.is_string() ){
-			current_object.add_key(key, "String");
+			m_objects.at(offset).add_key(key, "String");
 		} else if( value.is_object() ){
-			printf("Add key %s\n", key.cstring());
-#if 0
-			current_object.add_key(
+			m_objects.at(offset).add_key(
 						key,
-						"Object"
+						DoxygenScraperObject::translate_name(key, true)
 						);
-#endif
-			printf("done\n");
-			generate_code_object(key, value.to_object());
+
+			generate_code_object(key, value.to_object(), depth+1);
+
 		} else if( value.is_array() ){
-			printf("%s is an array %d (%d)\n", key.cstring(), value.to_array().count(), current_object.keys().count());
+
+			m_objects.at(offset).add_key(
+						key,
+						DoxygenScraperObject::translate_name(key, true),
+						true
+						);
 			for(u32 i=0; i < value.to_array().count(); i++){
-				current_object.add_key(
-							key,
-							"Array"
-							);
-				printf("Added key as array %d\n", current_object.keys().count());
 				if( value.to_array().at(i).is_object() ){
 					generate_code_object(
-								key, value.to_array().at(i).to_object()
+								key, value.to_array().at(i).to_object(), depth+1
 								);
 				}
 			}
 		}
+
 	}
 
 	return 0;
@@ -107,7 +136,7 @@ String DoxygenScraperObject::translate_name(const String& name, bool is_class){
 	if( name == "collaborationgraph"){ return is_class ? "CollaborationGraph" : "collaboration_graph"; }
 	if( name == "listofallmembers"){ return is_class ? "ListOfAllMembers" : "list_of_all_members"; }
 	if( name == "innerclass"){ return is_class ? "InnerClass" : "inner_class"; }
-	if( name == "reimplement"){ return is_class ? "Reimplement" : "reimplement"; }
+	if( name == "reimplements"){ return is_class ? "Reimplements" : "reimplements"; }
 	if( name == "programlisting"){ return is_class ? "ProgramListing" : "program_listing"; }
 	if( name == "highlight"){ return is_class ? "highlight" : "highlight"; }
 	if( name == "templateparamlist"){ return is_class ? "TemplateParamList" : "template_parameter_list"; }
@@ -115,7 +144,7 @@ String DoxygenScraperObject::translate_name(const String& name, bool is_class){
 	if( name == "reimplementedby"){ return is_class ? "ReimplementedBy" : "reimplemented_by"; }
 	if( name == "itemizedlist"){ return is_class ? "ItemizedList" : "itemized_list"; }
 	if( name == "listitem"){ return is_class ? "ListItem" : "list_item"; }
-	if( name == "ulink"){ return is_class ? "ulink" : "ulink"; }
+	if( name == "ulink"){ return is_class ? "HyperLink" : "hyper_link"; }
 	if( name == "small"){ return is_class ? "small" : "small"; }
 	if( name == "sect1"){ return is_class ? "SectionOne" : "section_one"; }
 	if( name == "xrefsect"){ return is_class ? "CrossReferenceSection" : "cross_reference_sect"; }
@@ -132,7 +161,12 @@ String DoxygenScraperObject::translate_name(const String& name, bool is_class){
 	if( name == "@bodyfile"){ return is_class ? "BodyFile" : "body_file"; }
 	if( name == "enumvalue"){ return is_class ? "EnumerationValue" : "enumeration_value"; }
 	if( name == "@bodyfile"){ return is_class ? "BodyFile" : "body_file"; }
-	if( name == "@bodyfile"){ return is_class ? "BodyFile" : "body_file"; }
+	if( name == "bold"){ return is_class ? "Bold" : "bold"; }
+	if( name == "sp"){ return is_class ? "Sp" : "sp"; }
+	if( name == "small"){ return is_class ? "Small" : "small"; }
+	if( name == "ref"){ return is_class ? "Reference" : "ref"; }
+	if( name == "simplesect"){ return is_class ? "SimpleSection" : "simple_section"; }
 	return name;
 }
+
 

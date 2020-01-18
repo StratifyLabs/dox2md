@@ -6,6 +6,7 @@
 #include "ApplicationPrinter.hpp"
 #include "Application.hpp"
 #include "DoxygenScraper.hpp"
+#include "Doxygen2Markdown.hpp"
 
 #define VERSION "0.1"
 
@@ -13,7 +14,24 @@ int main(int argc, char * argv[]){
 	sys::Cli cli(argc, argv);
 	cli.set_publisher("Stratify Labs, Inc");
 
-	DoxygenScraper().generate_code("../StratifyAPI/json");
+	//DoxygenScraper().generate_code("../StratifyAPI/json");
+
+	JsonObject object = JsonDocument().load(
+				fs::File::Path("../StratifyAPI/json/classcalc_1_1_base64.json")
+				).to_object();
+
+
+	String result = Doxygen2Markdown(
+				"memberdef",
+				object.at("doxygen").to_object()
+				.at("compounddef").to_object()
+				.at("sectiondef").to_array()
+				.at(0).to_object().at("memberdef"),
+				false
+				).to_markdown();
+
+	printf("%s", result.cstring());
+
 	exit(1);
 
 	Object::set_cli(cli);

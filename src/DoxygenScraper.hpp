@@ -4,6 +4,23 @@
 #include <sapi/var.hpp>
 #include "ApplicationPrinter.hpp"
 
+class DoxygenScraperKey {
+public:
+	DoxygenScraperKey(const String& key, const String& kind, bool is_array){
+		m_key = key;
+		m_kind = kind;
+		m_is_array = is_array;
+	}
+
+	const String& key() const { return m_key; }
+	const String& kind() const { return m_kind; }
+	bool is_array() const { return m_is_array; }
+
+private:
+	String m_key;
+	String m_kind;
+	bool m_is_array = false;
+};
 
 class DoxygenScraperObject {
 public:
@@ -16,18 +33,14 @@ public:
 		return m_name == a.m_name;
 	}
 
-	void add_key(const String& key, const String& kind){
-		printf("add key to %d\n", m_keys.count());
+	void add_key(const String& key, const String& kind, bool is_array = false){
 		for(size_t i = 0; i < m_keys.count(); i++){
-			if( m_keys.at(i).at(0) == key ){
+			if( m_keys.at(i).key() == key ){
 				//key already exists
 				return;
 			}
 		}
-		Array<String, 2> new_key;
-		new_key.at(0) = key;
-		new_key.at(1) = kind;
-		m_keys.push_back(new_key);
+		m_keys.push_back(DoxygenScraperKey(key,kind,is_array));
 	}
 
 	const String& name() const {
@@ -37,8 +50,19 @@ public:
 	String constructors() const {
 		String result;
 		for(auto const & key: m_keys){
-			String output_key = to_output_key(key.at(0));
-			result += "    m_" + translate_name(output_key) + " = object.at(\"" + key.at(0) + "\").to_string();\n";
+			String output_key = to_output_key(key.key());
+			if( key.is_array() ){
+				result += "    {\n";
+				result += "      JsonArray json_array = object.at(\"" + key.key() + "\").to_array();\n";
+				result += "      for(u32 i=0; i < json_array.count(); i++){\n";
+				result += "        m_" + translate_name(output_key) + ".push_back(" + key.kind() + "(json_array.at(i).to_object()));\n";
+				result += "      }\n";
+				result += "    }\n";
+			} else if( key.kind() == "String" ){
+				result += "    m_" + translate_name(output_key) + " = object.at(\"" + key.key() + "\").to_string();\n";
+			} else {
+				result += "    m_" + translate_name(output_key) + " = " + key.kind() + "(object.at(\"" + key.key() + "\").to_object());\n";
+			}
 		}
 		return result;
 	}
@@ -47,8 +71,8 @@ public:
 	String accessors() const {
 		String result;
 		for(auto const & key: m_keys){
-			String output_key = to_output_key(key.at(0));
-			result += "  const String& " + translate_name(output_key) + "() const { return m_" + translate_name(output_key) + "; }\n";
+			String output_key = to_output_key(key.key());
+			result += "  const " + key.kind() + "& " + translate_name(output_key) + "() const { return m_" + translate_name(output_key) + "; }\n";
 		}
 		return result;
 	}
@@ -57,15 +81,19 @@ public:
 	String members() const {
 		String result;
 		for(auto const & key: m_keys){
-			String output_key = to_output_key(key.at(0));
-			result += "  String m_" + translate_name(output_key) + ";\n";
+			String output_key = to_output_key(key.key());
+			if( key.is_array() ){
+				result += "  Vector<" + key.kind() + "> m_" + translate_name(output_key) + ";\n";
+			} else {
+				result += "  " + key.kind() + " m_" + translate_name(output_key) + ";\n";
+			}
 		}
 		return result;
 	}
 
 	static String translate_name(const String& name, bool is_class = false);
 
-	const Vector<Array<String, 2>>& keys() const {
+	const Vector<DoxygenScraperKey>& keys() const {
 		return m_keys;
 	}
 
@@ -90,7 +118,7 @@ private:
 		return result;
 	}
 	String m_name;
-	Vector<Array<String, 2>> m_keys;
+	Vector<DoxygenScraperKey> m_keys;
 };
 
 class DoxygenScraper : public ApplicationPrinter {
@@ -101,7 +129,7 @@ public:
 
 private:
 
-	int generate_code_object(const String& object_key, const JsonObject & object);
+	int generate_code_object(const String& object_key, const JsonObject & object, int depth);
 	Vector<DoxygenScraperObject> m_objects;
 
 };

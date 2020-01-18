@@ -13,6 +13,9 @@ set(SOURCES
 	MarkdownParser.hpp
 	Doxygen.cpp
 	Doxygen.hpp
+	Doxygen2Markdown.cpp
+	Doxygen2Markdown.hpp
+	DoxygenJson.hpp
 	DoxygenScraper.cpp
 	DoxygenScraper.hpp
 	Settings.cpp
