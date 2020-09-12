@@ -140,9 +140,12 @@ String Doxygen2Markdown::memberdef_to_markdown(const ConvertOptions &options) {
     result += "- [" + m_node.get_string("name") + "()](" + ")\n";
   } else {
 
+    result += "-----------------------\n";
+#if 0
     result += "<strong id=\"" + m_node.get_string("@id") + "\">"
               + m_node.get_string("name") + (is_function ? "()" : "")
               + "</strong>\n";
+#endif
 
     String argsstring = m_node.get_string("argsstring");
     if (argsstring == "null") {
@@ -151,17 +154,18 @@ String Doxygen2Markdown::memberdef_to_markdown(const ConvertOptions &options) {
 
     bool is_zero_args = argsstring.find("()") != String::npos;
 
-    argsstring.replace(String::ToErase(", "), String::ToInsert(",\n  "));
+    argsstring.replace(String::ToErase(", "), String::ToInsert(",\n>  "));
 
     if (is_zero_args == false) {
-      argsstring.replace(String::ToErase("("), String::ToInsert("(\n  "));
-      argsstring.replace(String::ToErase(")"), String::ToInsert("\n  )"));
+      argsstring.replace(String::ToErase("("), String::ToInsert(">  (\n>  "));
+      argsstring.replace(String::ToErase(")"), String::ToInsert("\n>  )"));
     }
 
     if (kind != "define") {
-      result += "```c++\n" + m_node.get_string("definition")
-                + (is_function ? (!is_zero_args ? argsstring : "()") : "")
-                + "\n```\n";
+      result += "\n<h3 id=\"" + m_node.get_string("@id") + "\">"
+                + m_node.get_string("definition")
+                + (is_function && is_zero_args ? "()" : "") + "</h3>\n\n"
+                + (is_function && !is_zero_args ? argsstring : "") + "\n";
 
       if (is_function && !is_zero_args) {
 
