@@ -5,16 +5,16 @@
 
 class Application : public Object {
 public:
-	Application();
+  Application();
 
-	int run();
+  int run();
 
 private:
-	int convert_xml_input_to_json_input();
-	int parse_markdown();
-	int generate_code();
-	int build_code();
-
+  int convert_xml_to_md();
+  int convert_json_input_to_markdown();
+  int parse_markdown();
+  int generate_code();
+  int build_code();
 };
 
 #endif // APPLICATION_HPP

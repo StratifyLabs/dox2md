@@ -18,6 +18,7 @@ set(SOURCES
 	DoxygenJson.hpp
 	DoxygenScraper.cpp
 	DoxygenScraper.hpp
+	DoxygenTypes.hpp
 	Settings.cpp
 	Settings.hpp
 	PARENT_SCOPE)

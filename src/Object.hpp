@@ -8,30 +8,24 @@
 
 class Object {
 public:
-	Object();
-	static sys::Printer & printer(){
-		return ApplicationPrinter::printer();
-	}
+  Object();
+  static sys::Printer &printer() { return ApplicationPrinter::printer(); }
 
-	static Settings & settings(){ return m_settings; }
+  static Settings &settings() { return m_settings; }
 
-	static void set_cli(sys::Cli & cli){
-		m_cli = &cli;
-	}
+  static void set_cli(sys::Cli &cli) { m_cli = &cli; }
 
-	static sys::Cli & cli(){
-		if( m_cli == nullptr ){
-			printer().fatal("cli not set");
-			exit(1);
-		}
-		return *m_cli;
-	}
+  static sys::Cli &cli() {
+    if (m_cli == nullptr) {
+      printer().fatal("cli not set");
+      exit(1);
+    }
+    return *m_cli;
+  }
 
 private:
-
-	static sys::Cli * m_cli;
-	static Settings m_settings;
-
+  static sys::Cli *m_cli;
+  static Settings m_settings;
 };
 
 #endif // OBJECT_HPP

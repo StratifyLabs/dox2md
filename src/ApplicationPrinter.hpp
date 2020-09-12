@@ -5,11 +5,10 @@
 
 class ApplicationPrinter {
 public:
-	static sys::YamlPrinter & printer(){ return m_printer; }
+  static sys::YamlPrinter &printer() { return m_printer; }
 
 private:
-	static sys::YamlPrinter m_printer;
-
+  static sys::YamlPrinter m_printer;
 };
 
 #endif // APPLICATIONPRINTER_HPP

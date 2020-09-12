@@ -5,16 +5,13 @@
 
 class MarkdownParser : public Object {
 public:
-	MarkdownParser();
+  MarkdownParser();
 
-	var::JsonObject extract_code_snippets(const var::String & file_path,
-			var::JsonObject properties
-			);
-
+  var::JsonObject extract_code_snippets(
+    const var::String &file_path,
+    var::JsonObject properties);
 
 private:
-
-
 };
 
 #endif // MARKDOWNPARSER_HPP
