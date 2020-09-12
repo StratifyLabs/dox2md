@@ -52,11 +52,14 @@ public:
     API_AB(ConvertOptions, brief, false);
     API_AB(ConvertOptions, public_static_func_visible, true);
     API_AB(ConvertOptions, public_func_visible, true);
-    API_AB(ConvertOptions, private_static_func_visible, true);
-    API_AB(ConvertOptions, private_func_visible, true);
+    API_AB(ConvertOptions, private_static_func_visible, false);
+    API_AB(ConvertOptions, private_func_visible, false);
     API_AB(ConvertOptions, public_type_visible, true);
-    API_AB(ConvertOptions, private_type_visible, true);
-    API_AB(ConvertOptions, private_attrib_visible, true);
+    API_AB(ConvertOptions, private_type_visible, false);
+    API_AB(ConvertOptions, public_attrib_visible, true);
+    API_AB(ConvertOptions, private_attrib_visible, false);
+    API_AB(ConvertOptions, enum_visible, true);
+    API_AB(ConvertOptions, define_visible, true);
   };
 
   String convert(const ConvertOptions &options);

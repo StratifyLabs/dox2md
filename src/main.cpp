@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
 #if 0
   JsonObject object
     = JsonDocument()
-        .load(fs::File::Path("../StratifyAPI/json/namespacefs.json"))
+        .load(fs::File::Path("../StratifyOS/json/structadc__info__t.json"))
         .to_object();
 
   String result = Doxygen2Markdown("doxygen", object.at("doxygen"))

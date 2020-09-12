@@ -17,7 +17,7 @@ public:
     return m_project.at("output").to_string();
   }
 
-  Vector<String> pages() const {
+  StringList pages() const {
     JsonArray pages_array = m_project.at("pages").to_array();
     Vector<String> result;
     for (u32 i = 0; i < pages_array.count(); i++) {
@@ -26,7 +26,7 @@ public:
     return result;
   }
 
-  Vector<String> load_input_files() const {
+  StringList load_input_files() const {
     return Dir::read_list(input_directory_path(), [&](const String &entry) {
       if (entry.find(".xml") != String::npos) {
         // only convert files that are part of the documentation pages output
